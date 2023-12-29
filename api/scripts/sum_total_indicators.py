@@ -203,12 +203,19 @@ def main(document_id: int):
                         for record in id_existing_records:
                             supabase_client.table(supabase_table).delete().eq("id", record).execute() # Elimina registro
             else:
-                print(f"No se pudo obtener el archivo XLSX del servidor remoto. Código de estado: {response.status_code}")
+                resultado = f"Fail to getting XLSX File from Remote Server. Code Fail Status: {response.status_code}"
+                return resultado, False
         else:
-            print(f"No se pudo recuperar el {querySourceDocument} de la tabla {supabase_table}")
+            resultado = f"Fail to recover {querySourceDocument} from table {supabase_table}"
+            return resultado, False
         # spark.stop()
+        return "Successfull Process", True
         
     except requests.exceptions.RequestException as e:
-        print(f"Error al realizar la solicitud HTTP: {e}")
+        # Manejo de otras excepciones
+        resultado = f"Error al realizar la solicitud HTTP: {str(e)}"
+        return resultado, False
     except Exception as e:
-        print(f"Ocurrió un error: {e}")
+        # Manejo de otras excepciones
+        resultado = f"Error: {str(e)}"
+        return resultado, False
