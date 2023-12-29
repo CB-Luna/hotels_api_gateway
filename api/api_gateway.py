@@ -5,7 +5,7 @@ from scripts import sum_total_indicators
 
 app = Flask(__name__)
 
-@app.route('/api/update/sum_total_indicators/<int:document_id>', methods=['GET'])
+@app.route('/apigateway/update/sum_total_indicators/<int:document_id>', methods=['GET'])
 def sum_total_indicator(document_id):
     if request.method == 'GET':
         print("Calling to Sum Total Indicators")
