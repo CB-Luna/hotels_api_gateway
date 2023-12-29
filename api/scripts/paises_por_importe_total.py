@@ -2,8 +2,6 @@ import pyspark
 import csv
 import requests
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
-from pyspark.sql.window import Window
 from supabase import create_client, Client
 from pyspark.sql.types import StructType, StructField, IntegerType, IntegerType, StringType, FloatType
 from pyspark.sql.functions import col, avg, sum
@@ -13,9 +11,7 @@ from datetime import datetime
 from dateutil import tz
 
  # Crea una sesión de Spark
-spark = SparkSession.builder.appName("MesesPorImporteTotal").getOrCreate()
-# Configuración para usar el antiguo analizador de fechas
-spark.conf.set("spark.sql.legacy.timeParserPolicy", "LEGACY")
+spark = SparkSession.builder.appName("PaisesPorImporteTotal").getOrCreate()
 # Crea un SQLContext a partir de la sesión de Spark
 sqlContext = SQLContext(spark)
 # Define el esquema personalizado
@@ -45,7 +41,7 @@ url_csv_remoto = servidor_remoto_url + archivo_csv_remoto
 existing_records = []
 
 # Define la tabla donde se va a hacer el CRUD de Datos
-supabase_table = "month_import"
+supabase_table = "region_amount"
 # Salida
 output_api_url = "https://lagiinfnnpqlsydoriqt.supabase.co"
 output_api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhZ2lpbmZubnBxbHN5ZG9yaXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTc3NDM1MzEsImV4cCI6MjAxMzMxOTUzMX0.3nZOm4gzHdM27FqxUUOSzYl5eBuHQXzCNPof3Fk83po"
@@ -53,36 +49,35 @@ supabase_client_out: Client = create_client(output_api_url, output_api_key)
 
 # Función para actualizar un registro en Supabase
 def actualizar_registro(row):
-    # Define el valor que permite verificar si existe el registro (por ejemplo, el valor de la columna "month_year")
-    month_year = row["month_year"]
+    # Define el valor que permite verificar si existe el registro (por ejemplo, el valor de la columna "hotel_country")
+    hotel_country = row["hotel_country"]
     # Define los valores que se van a INSERTAR o ACTUALIZAR
-    max_property_name = row["max_property_name"]
-    min_property_name = row["min_property_name"]
-    sum_total_hotel_cost = row["sum_total_hotel_cost"]
-    sum_total_hotel_charges = row["sum_total_hotel_charges"]
-    sum_supplemental_charges = row["sum_supplemental_charges"]
+    region = row["region"]
+    total_hotel_cost = row["total_hotel_cost"]
+    total_hotel_charges = row["total_hotel_charges"]
+    total_supplemental_charges = row["total_supplemental_charges"]
     # Realiza una consulta para verificar si el registro existe
-    # En este ejemplo, estamos verificando si existe un registro con un valor específico en la columna "month_year"
-    condition = month_year
-    queryExistingRow = "month_year"
-    responseExistingRow = supabase_client_out.table(supabase_table).select(queryExistingRow).eq("month_year", condition).execute()
+    # En este ejemplo, estamos verificando si existe un registro con un valor específico en la columna "hotel_country"
+    condition = hotel_country
+    queryExistingRow = "hotel_country"
+    responseExistingRow = supabase_client_out.table(supabase_table).select(queryExistingRow).eq("hotel_country", condition).execute()
     # Verifica si ya existe el registro de la iteración actual en Supabase
     if responseExistingRow.data:
         # Se realiza el UPDATE del registro
-        responseUpdate = supabase_client_out.table(supabase_table).update({"max_property_name": max_property_name, "min_property_name": min_property_name, "sum_total_hotel_cost": sum_total_hotel_cost, "sum_total_hotel_charges": sum_total_hotel_charges, "sum_supplemental_charges": sum_supplemental_charges}).eq("month_year", responseExistingRow.data[0]["month_year"]).execute()
+        responseUpdate = supabase_client_out.table(supabase_table).update({"region": region, "total_hotel_cost": total_hotel_cost, "total_hotel_charges": total_hotel_charges, "total_supplemental_charges": total_supplemental_charges}).eq("hotel_country", responseExistingRow.data[0]["hotel_country"]).execute()
         # Verifica la respuesta exitosa y maneja errores si es necesario
         if responseUpdate.data:
-            print(f"Registro actualizado: {month_year}")
+            print(f"Registro actualizado: {hotel_country}")
         else:
-            print(f"Error al actualizar registro {month_year}: {error}")
+            print(f"Error al actualizar registro {hotel_country}: {error}")
     else:
         # Se realiza el CREATE del registro
-        responseCreate = supabase_client_out.table(supabase_table).insert({"month_year": month_year, "max_property_name": max_property_name, "min_property_name": min_property_name, "sum_total_hotel_cost": sum_total_hotel_cost, "sum_total_hotel_charges": sum_total_hotel_charges, "sum_supplemental_charges": sum_supplemental_charges}).execute()
+        responseCreate = supabase_client_out.table(supabase_table).insert({"hotel_country": hotel_country, "region": region, "total_hotel_cost": total_hotel_cost, "total_hotel_charges": total_hotel_charges, "total_supplemental_charges": total_supplemental_charges}).execute()
         # Verifica la respuesta exitosa y maneja errores si es necesario
         if responseCreate.data:
-            print(f"Registro creado: {month_year}")
+            print(f"Registro creado: {hotel_country}")
         else:
-            print(f"Error al crear registro {month_year}: {error}")
+            print(f"Error al crear registro {hotel_country}: {error}")
 
 # Función principal del Proceso
 if __name__ == "__main__":
@@ -120,46 +115,35 @@ if __name__ == "__main__":
             # Crea un DataFrame a partir de las filas y el esquema
             df = spark.createDataFrame(data_rows, schema=schema)
             df.show(4)
-            # Convierte la columna de fecha al formato correcto
-            df = df.withColumn("booking_date", F.to_date(df["booking_date"], "M/dd/yyyy"))
-
-            # Extrae mes y año de la columna booking_date
-            df = df.withColumn("month_year", F.date_format("booking_date", "yyyy-MM"))
-
-            # Agrupa por mes y año y realiza los cálculos
-            result_df = df.groupBy("month_year").agg(
-                F.sum("supplemental_charges").alias("sum_supplemental_charges"),
-                F.sum("total_hotel_cost").alias("sum_total_hotel_cost"),
-                F.sum("total_hotel_charges").alias("sum_total_hotel_charges"),
-                F.max("property_name").alias("max_property_name"),
-                F.min("property_name").alias("min_property_name")
+            # Agrupa por 'hotel_country' y calcula las sumas
+            result_df = df.groupBy("hotel_country", "region").agg(
+                sum("supplemental_charges").alias("total_supplemental_charges"),
+                sum("total_hotel_cost").alias("total_hotel_cost"),
+                sum("total_hotel_charges").alias("total_hotel_charges")
             )
-            # Filtrar las filas donde month_year no es NULL
-            result_df = result_df.filter(F.col("month_year").isNotNull())
-            # Agrupa por 'month_year' y calcula las sumas
             # Muestra el resultado
             result_df.show(10)
             print(f"Filas: {result_df.count()}")
-            # Realiza una consulta SQL para recuperar los valores de "month_year" de los registros en Supabase
-            queryStoredData = "month_year"
+            # Realiza una consulta SQL para recuperar los valores de "hotel_country" de los registros en Supabase
+            queryStoredData = "hotel_country"
             responseStoredData = supabase_client_out.table(supabase_table).select(queryStoredData).execute()
             # Verifica si hubo un error en la consulta
             if responseStoredData.data:
-                # Almacena los valores de "month_year" en una lista
-                existing_records = [record["month_year"] for record in responseStoredData.data]
-                print(f"Lista recuperada de los month_year registrados existentes: {existing_records}")
+                # Almacena los valores de "hotel_country" en una lista
+                existing_records = [record["hotel_country"] for record in responseStoredData.data]
+                print(f"Lista recuperada de los hotel_country registrados existentes: {existing_records}")
             else:
                 print(f"No se pudieron recuperar valores {queryStoredData} de la tabla {supabase_table}")
             # Itera a través de las filas del DataFrame y aplica la función de actualización
             rows2 = result_df.rdd.map(lambda row: row.asDict()).collect() # NO HACER collet()
             for row in rows2:
                 actualizar_registro(row)
-                if row["month_year"] in existing_records:
-                    existing_records.remove(row["month_year"])
+                if row["hotel_country"] in existing_records:
+                    existing_records.remove(row["hotel_country"])
             print(f"Tamaño de Lista de registros a eliminar: {len(existing_records)}")
             if len(existing_records) > 0:
                 for record in existing_records:
-                    supabase_client_out.table(supabase_table).delete().eq("month_year", record).execute() # Elimina registro
+                    supabase_client_out.table(supabase_table).delete().eq("hotel_country", record).execute() # Elimina registro
             spark.stop()
         else:
             print(f"No se pudo obtener el archivo CSV del servidor remoto. Código de estado: {response.status_code}")
