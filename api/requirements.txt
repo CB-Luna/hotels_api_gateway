@@ -6,3 +6,4 @@ requests==2.31.0
 pandas==1.3.3
 openpyxl
 xlrd
+flask-cors
