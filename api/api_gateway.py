@@ -10,7 +10,13 @@ CORS(app)  # Habilita CORS para toda la aplicación
 @app.route('/apigateway/update/sum_total_indicators/<int:document_id>',  methods=['GET', 'OPTIONS']) # Agregar método POST, DELETE, FETCH cuando se requiera
 def sum_total_indicator(document_id):
     if request.method == 'OPTIONS':
-        response = make_response()
+        result,bool = sum_total_indicators.main(document_id)
+        # Getting date today
+        fecha_hoy = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if bool:
+            response = make_response(jsonify({'message': f'Successfull process sum_total_indicators on {fecha_hoy}'}))
+        else:
+            response = make_response(jsonify({'message': f'Failed process sum_total_indicators on {fecha_hoy}, details: {result}'}))
         # Agregar headers correspondientes, dependiendo el método
         response.headers['Access-Control-Allow-Methods'] = 'GET' # Agregar método POST, DELETE, FETCH cuando se requiera
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
@@ -23,9 +29,10 @@ def sum_total_indicator(document_id):
         # Getting date today
         fecha_hoy = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if bool:
-            return jsonify({'message': f'Successfull process sum_total_indicators on {fecha_hoy}'})
+            response = make_response(jsonify({'message': f'Successfull process sum_total_indicators on {fecha_hoy}'}))
         else:
-            return jsonify({'message': f'Failed process sum_total_indicators on {fecha_hoy}, details: {result}'})
+            response = make_response(jsonify({'message': f'Failed process sum_total_indicators on {fecha_hoy}, details: {result}'}))
+        return response
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8089))
