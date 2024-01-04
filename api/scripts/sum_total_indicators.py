@@ -21,12 +21,13 @@ output_api_url = "https://qikvwtvspqaenqmjpkti.supabase.co"
 output_api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpa3Z3dHZzcHFhZW5xbWpwa3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDEzMTk3OTUsImV4cCI6MjAxNjg5NTc5NX0.t78dmEgGxu6pW8aDfw84Pv0BklG3jsG_UGl7mkSCx4M"
 supabase_client: Client = create_client(output_api_url, output_api_key)
 
-def actualizar_registro_todos(id_existing_record, sum_supplemental_charges, sum_total_hotel_cost, sum_total_hotel_charges, sum_reference_rate, sum_reference_cost, sum_lowest_rate, sum_low_cost, sum_rate_in_local_currency, id_existing_records, supabase_table):
+def actualizar_registro_todos(id_existing_record, id_document, sum_supplemental_charges, sum_total_hotel_cost, sum_total_hotel_charges, sum_reference_rate, sum_reference_cost, sum_lowest_rate, sum_low_cost, sum_rate_in_local_currency, id_existing_records, supabase_table):
     """
     Función para actualizar o insertar un registro en Supabase para la tabla "indicadores_anexos_dashboard".
 
     Args:
         id_existing_record: valor del registro existente que se va a actualizar (si aún no existe en la tabla su valor es 0) (int) 
+        id_document: id el documento existente que se va a actualizar o crear (int) 
         sum_supplemental_charges: valor de suma de supplemental charges (float).
         sum_total_hotel_cost: valor de suma de total hotel cost (float).
         sum_total_hotel_charges: valor de suma de total hotel charges (float).
@@ -41,7 +42,7 @@ def actualizar_registro_todos(id_existing_record, sum_supplemental_charges, sum_
         Null.
     """
     # Realiza una consulta para verificar si el registro existe
-    condition = "TODOS"
+    condition = id_document
     # Verifica si ya existe el registro con "id_existing_record" actual en Supabase
     if id_existing_record != 0:
         # Se realiza el UPDATE del registro
@@ -168,7 +169,7 @@ def main(document_id: int):
                     # Actualiza, inserta o elimina datos en la tabla de Supabase
                     # Realiza una consulta SQL para recuperar los valores de "id" de los registros en Supabase
                     queryStoredData = "id"
-                    responseStoredData = supabase_client.table(supabase_table).select(queryStoredData).eq("id_analisis", "TODOS").execute()
+                    responseStoredData = supabase_client.table(supabase_table).select(queryStoredData).eq("id_analisis", document_id).execute()
                     # Verifica si hubo un error en la consulta
                     if responseStoredData.data:
                         # Almacena los valores de "id" en una lista
@@ -197,7 +198,7 @@ def main(document_id: int):
                     print("sum_lowest_rate:", sum_lowest_rate)
                     print("sum_low_cost:", sum_low_cost)
                     print("sum_rate_in_local_currency:", sum_rate_in_local_currency)
-                    actualizar_registro_todos(id_existing_record, sum_supplemental_charges, sum_total_hotel_cost, sum_total_hotel_charges, sum_reference_rate, sum_reference_cost, sum_lowest_rate, sum_low_cost, sum_rate_in_local_currency, id_existing_records, supabase_table)
+                    actualizar_registro_todos(id_existing_record, document_id, sum_supplemental_charges, sum_total_hotel_cost, sum_total_hotel_charges, sum_reference_rate, sum_reference_cost, sum_lowest_rate, sum_low_cost, sum_rate_in_local_currency, id_existing_records, supabase_table)
                     print(f"Tamaño de Lista de registros a eliminar: {len(id_existing_records)}")
                     if len(id_existing_records) > 0:
                         for record in id_existing_records:
