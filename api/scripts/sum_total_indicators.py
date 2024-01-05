@@ -11,7 +11,7 @@ from pyspark.sql import SQLContext
 from io import BytesIO
 from io import StringIO
 
- # Crea una sesión de Spark
+# Crea una sesión de Spark
 spark = SparkSession.builder.appName("SumTotalIndicators").getOrCreate()
 # Crea un SQLContext a partir de la sesión de Spark
 sqlContext = SQLContext(spark)
@@ -23,11 +23,11 @@ supabase_client: Client = create_client(output_api_url, output_api_key)
 
 def actualizar_registro_todos(id_existing_record, id_document, sum_supplemental_charges, sum_total_hotel_cost, sum_total_hotel_charges, sum_reference_rate, sum_reference_cost, sum_lowest_rate, sum_low_cost, sum_rate_in_local_currency, id_existing_records, supabase_table):
     """
-    Función para actualizar o insertar un registro en Supabase para la tabla "indicadores_anexos_dashboard".
+    Función para actualizar o insertar un registro en Supabase para la tabla "indicators_total_hotels".
 
     Args:
         id_existing_record: valor del registro existente que se va a actualizar (si aún no existe en la tabla su valor es 0) (int) 
-        id_document: id el documento existente que se va a actualizar o crear (int) 
+        id_document: id el documento existente que se va a actualizar o crear y se define en la tabla como "id_analisis" (int) 
         sum_supplemental_charges: valor de suma de supplemental charges (float).
         sum_total_hotel_cost: valor de suma de total hotel cost (float).
         sum_total_hotel_charges: valor de suma de total hotel charges (float).
@@ -41,9 +41,9 @@ def actualizar_registro_todos(id_existing_record, id_document, sum_supplemental_
     Returns:
         Null.
     """
-    # Realiza una consulta para verificar si el registro existe
+    # Se reasigna el id del documento ("id_analisis") a la condición para insertar o actualizar el registro en la tabla
     condition = id_document
-    # Verifica si ya existe el registro con "id_existing_record" actual en Supabase
+    # Verifica si ya existe el registro con "id_existing_record" actual en la tabla de Supabase
     if id_existing_record != 0:
         # Se realiza el UPDATE del registro
         responseUpdate = supabase_client.table(supabase_table).update({"sum_total_a":sum_supplemental_charges, "sum_total_b":sum_total_hotel_cost, "sum_total_c":sum_total_hotel_charges, "sum_total_d":sum_reference_rate, "sum_total_e":sum_reference_cost, "sum_total_f":sum_lowest_rate, "sum_total_g":sum_low_cost, "sum_total_h":sum_rate_in_local_currency}).eq("id", id_existing_record).execute()
