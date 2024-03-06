@@ -5,7 +5,14 @@ import pandas as pd
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from supabase import create_client, Client
-from pyspark.sql.types import StructType, StructField, IntegerType, IntegerType, StringType, FloatType
+from pyspark.sql.types import (
+    StructType, 
+    StructField, 
+    IntegerType, 
+    IntegerType, 
+    StringType, 
+    FloatType
+)
 from pyspark.sql import Row
 from pyspark.sql import SQLContext
 from io import BytesIO
@@ -211,14 +218,14 @@ def main(document_id: int):
                 resultado = f"Fail to getting XLSX File from Remote Server. Code Fail Status: {response.status_code}"
                 return resultado, False
         else:
-            resultado = f"Fail to recover {querySourceDocument} from table {supabase_table}"
+            resultado = f"Fail to recover record document {querySourceDocument} from table {supabase_table}"
             return resultado, False
         # spark.stop()
         return "Successfull Process", True
         
     except requests.exceptions.RequestException as e:
         # Manejo de otras excepciones
-        resultado = f"Error al realizar la solicitud HTTP: {str(e)}"
+        resultado = f"Error in HTTP request: {str(e)}"
         return resultado, False
     except Exception as e:
         # Manejo de otras excepciones
